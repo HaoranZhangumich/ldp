@@ -212,3 +212,24 @@ If you use the code, remember to cite our paper:
       url={https://arxiv.org/abs/2505.09561}, 
 }
 ```
+```
+python train.py \
+  --config-dir=experiment_configs \
+  --config-name=history_bench/history_bench_transformer \
+  --logging.name="encoder_e2e" \
+  --hydra.run.dir="data/outputs/encoder_e2e"
+
+
+python rewrite_with_embeddings.py \
+  -c /path/to/your_trained_encoder.ckpt \
+  -o logs_cache_history_bench \
+  -f /home/haoran-zhang/Desktop/hisotrybench/demo_data/record_dataset_ButtonChooseBin_2.h5
+
+
+python train.py \
+  --config-dir=experiment_configs \
+  --config-name=history_bench/history_bench_emb \
+  --logging.name="encoder_longctx_emb" \
+  --hydra.run.dir="data/outputs/encoder_longctx_emb"
+
+```

@@ -1,0 +1,203 @@
+# Make sure there are NO tabs and this file is UTF-8 (no BOM)
+defaults:
+  - _self_
+
+_target_: diffusion_policy.workspace.train_diffusion_transformer_hybrid_workspace.TrainDiffusionTransformerHybridWorkspace
+
+# ===== globals (ALOHA style) =====
+obs_encoder_dir: null
+obs_encoder_freeze: false
+global_horizon: 64
+global_obs: 2
+global_action: 1
+subsample_frames: 1
+subsampling_method: uniform
+
+# ===== checkpointing =====
+checkpoint:
+  save_last_ckpt: true
+  save_last_snapshot: false
+  topk:
+    format_str: epoch={epoch:04d}-test_mean_score={test_mean_score:.3f}.ckpt
+    k: 5
+    mode: max
+    monitor_key: test_mean_score
+
+# ===== dataloaders =====
+dataloader:
+  batch_size: 64
+  num_workers: 8
+  persistent_workers: false
+  pin_memory: true
+  shuffle: true
+
+val_dataloader:
+  batch_size: 64
+  num_workers: 8
+  persistent_workers: false
+  pin_memory: true
+  shuffle: false
+
+dataset_obs_steps: ${global_obs}
+
+# ===== EMA =====
+ema:
+  _target_: diffusion_policy.model.diffusion.ema_model.EMAModel
+  inv_gamma: 1.0
+  max_value: 0.9999
+  min_value: 0.0
+  power: 0.75
+  update_after_step: 0
+
+# ===== logging / run meta =====
+exp_name: default
+horizon: ${global_horizon}
+keypoint_visible_rate: 1.0
+
+logging:
+  group: null
+  id: null
+  mode: online
+  name: encoder_e2e
+  project: diffusion_policy_debug
+  resume: true
+  tags: [train_diffusion_transformer_hybrid, pusht_image, encoder_e2e]
+
+multi_run:
+  run_dir: data/outputs/encoder_e2e
+  wandb_name_base: encoder_e2e
+
+# ===== shared knobs =====
+n_action_steps: ${global_action}
+n_latency_steps: 0
+n_obs_steps: ${global_obs}
+name: train_diffusion_transformer_hybrid
+obs_as_cond: true
+
+# ===== optim =====
+optimizer:
+  betas: [0.9, 0.95]
+  learning_rate: 1.0e-4
+  obs_encoder_weight_decay: 1.0e-06
+  transformer_weight_decay: 1.0e-3
+
+past_action_visible: false
+
+# ===== policy (image; train encoder e2e on images) =====
+policy:
+  _target_: diffusion_policy.policy.diffusion_transformer_hybrid_image_policy.DiffusionTransformerHybridImagePolicy
+  causal_attn: true
+  past_action_pred: false
+  past_steps_reg: -1
+
+  # pipe from header (ALOHA style)
+  obs_encoder_dir: ${obs_encoder_dir}
+  obs_encoder_freeze: ${obs_encoder_freeze}
+
+  # force raw images, ignore cached embeds
+  use_embed_if_present: false
+
+  crop_shape: [84, 84]
+  eval_fixed_crop: true
+  horizon: ${global_horizon}
+  n_action_steps: ${global_action}
+  n_cond_layers: 0
+  n_emb: 256
+  n_head: 4
+  n_layer: 8
+  n_obs_steps: ${global_obs}
+  noise_scheduler:
+    _target_: diffusers.schedulers.scheduling_ddpm.DDPMScheduler
+    beta_end: 0.02
+    beta_schedule: squaredcos_cap_v2
+    beta_start: 0.0001
+    clip_sample: true
+    num_train_timesteps: 100
+    prediction_type: epsilon
+    variance_type: fixed_small
+  num_inference_steps: 100
+  obs_as_cond: true
+  obs_encoder_group_norm: true
+  p_drop_attn: 0.3
+  p_drop_emb: 0.0
+  shape_meta:
+    action: {shape: [2]}
+    obs:
+      agent_pos: {shape: [2], type: low_dim}
+      image: {shape: [3, 96, 96], type: rgb}
+  time_as_cond: true
+
+# ===== global shape meta =====
+shape_meta:
+  action: {shape: [2]}
+  obs:
+    agent_pos: {shape: [2], type: low_dim}
+    image: {shape: [3, 96, 96], type: rgb}
+
+# ===== dataset + runner (keep indentation under `task:`) =====
+task:
+  _target_: diffusion_policy.dataset.maniskill_image_dataset.ManiSkillLDPImageDataset
+  dataset_path: '/home/haoran-zhang/Desktop/hisotrybench/demo_data/record_dataset_ButtonChooseBin_2.h5'
+  horizon: 16
+  pad_before: 0
+  pad_after: 0
+  image_key: image
+  wrist_image_key: wrist_image
+  use_wrist_camera: false
+  state_key: state
+  action_key: action
+  seed: 42
+  val_ratio: 0.05
+  max_train_episodes: null
+  success_key: current_task_demonstration
+  success_filter: exclude_true
+  exclude_current_task_timesteps: true
+  env_filter: null
+  max_envs: null
+  max_episodes_per_env: null
+  max_total_episodes: null
+
+  env_runner:
+    _target_: diffusion_policy.env_runner.pusht_image_runner.PushTImageRunner
+    fps: 10
+    legacy_test: true
+    max_steps: 300
+    n_action_steps: ${global_action}
+    n_envs: null
+    n_obs_steps: ${global_obs}
+    n_test: 40
+    n_test_vis: 2
+    n_train: 6
+    n_train_vis: 1
+    past_action: false
+    test_start_seed: 100000
+    train_start_seed: 0
+
+  image_shape: [3, 96, 96]
+  name: pusht_image
+  shape_meta:
+    action: {shape: [2]}
+    obs:
+      agent_pos: {shape: [2], type: low_dim}
+      image: {shape: [3, 96, 96], type: rgb}
+
+task_name: pusht_image
+
+# ===== schedule =====
+training:
+  checkpoint_every: 100
+  debug: false
+  device: cuda:0
+  gradient_accumulate_every: 1
+  lr_scheduler: cosine
+  lr_warmup_steps: 1000
+  max_train_steps: null
+  max_val_steps: null
+  num_epochs: 701
+  resume: true
+  rollout_every: 100
+  sample_every: 5
+  seed: 42
+  tqdm_interval_sec: 1.0
+  use_ema: true
+  val_every: 1

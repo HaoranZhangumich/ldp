@@ -1,0 +1,203 @@
+_target_: diffusion_policy.workspace.train_diffusion_transformer_hybrid_workspace.TrainDiffusionTransformerHybridWorkspace
+global_horizon: 64
+global_action: 1
+global_obs: 2
+
+checkpoint:
+  save_last_ckpt: true
+  save_last_snapshot: false
+  topk:
+    format_str: epoch={epoch:04d}-test_mean_score={test_mean_score:.3f}.ckpt
+    k: 5
+    mode: max
+    monitor_key: test_mean_score
+dataloader:
+  batch_size: 64
+  num_workers: 8
+  persistent_workers: false
+  pin_memory: true
+  shuffle: true
+dataset_obs_steps: ${global_obs}
+ema:
+  _target_: diffusion_policy.model.diffusion.ema_model.EMAModel
+  inv_gamma: 1.0
+  max_value: 0.9999
+  min_value: 0.0
+  power: 0.75
+  update_after_step: 0
+exp_name: default
+horizon: ${global_horizon}
+keypoint_visible_rate: 1.0
+logging:
+  group: null
+  id: null
+  mode: online
+  name: 2023.01.16-20.20.50_train_diffusion_transformer_hybrid_pusht_image
+  project: diffusion_policy_debug
+  resume: true
+  tags:
+  - train_diffusion_transformer_hybrid
+  - pusht_image
+  - default
+multi_run:
+  run_dir: data/outputs/2023.01.16/20.20.50_train_diffusion_transformer_hybrid_pusht_image
+  wandb_name_base: 2023.01.16-20.20.50_train_diffusion_transformer_hybrid_pusht_image
+n_action_steps: ${global_action}
+n_latency_steps: 0
+n_obs_steps: ${global_obs}
+name: train_diffusion_transformer_hybrid
+obs_as_cond: true
+optimizer:
+  betas:
+  - 0.9
+  - 0.95
+  learning_rate: 0.0001
+  obs_encoder_weight_decay: 1.0e-06
+  transformer_weight_decay: 0.001
+past_action_visible: false
+policy:
+  _target_: diffusion_policy.policy.diffusion_transformer_hybrid_image_policy.DiffusionTransformerHybridImagePolicy
+  causal_attn: true
+  past_action_pred: false
+  past_steps_reg: -1
+  use_embed_if_present: true
+  crop_shape:
+  - 84
+  - 84
+  eval_fixed_crop: true
+  horizon: ${global_horizon}
+  n_action_steps: ${global_action}
+  n_cond_layers: 0
+  n_emb: 256
+  n_head: 4
+  n_layer: 8
+  n_obs_steps: ${global_obs}
+  noise_scheduler:
+    _target_: diffusers.schedulers.scheduling_ddpm.DDPMScheduler
+    beta_end: 0.02
+    beta_schedule: squaredcos_cap_v2
+    beta_start: 0.0001
+    clip_sample: true
+    num_train_timesteps: 100
+    prediction_type: epsilon
+    variance_type: fixed_small
+  num_inference_steps: 100
+  obs_as_cond: true
+  obs_encoder_group_norm: true
+  obs_encoder_dir: null
+  obs_encoder_freeze: false
+  p_drop_attn: 0.3
+  p_drop_emb: 0.0
+  shape_meta:
+    action:
+      shape:
+      - 2
+    obs:
+      agent_pos:
+        shape:
+        - 2
+        type: low_dim
+      image:
+        shape:
+        - 3
+        - 96
+        - 96
+        type: rgb
+  time_as_cond: true
+shape_meta:
+  action:
+    shape:
+    - 2
+  obs:
+    agent_pos:
+      shape:
+      - 2
+      type: low_dim
+    image:
+      shape:
+      - 3
+      - 96
+      - 96
+      type: rgb
+task:
+  dataset:
+    _target_: diffusion_policy.dataset.demo_dataset.ManiSkillLDPImageDataset
+    dataset_path: /home/haoran-zhang/Desktop/hisotrybench/demo_data/record_dataset_ButtonChooseBin_2.h5
+    horizon: ${global_horizon}
+    pad_before: 1
+    pad_after: 7
+    image_key: image
+    wrist_image_key: wrist_image
+    use_wrist_camera: false
+    state_key: state
+    action_key: action
+    # split / sampling
+    seed: 42
+    val_ratio: 0.02
+    max_train_episodes: 90
+    success_key: current_task_demonstration
+    success_filter: exclude_true         # keep timesteps NOT marked as “current task”
+    exclude_current_task_timesteps: true
+    env_filter: null
+    max_envs: null
+    max_episodes_per_env: null
+    max_total_episodes: null
+  env_runner:
+    _target_: diffusion_policy.env_runner.pusht_image_runner.PushTImageRunner
+    fps: 10
+    legacy_test: true
+    max_steps: 300
+    n_action_steps: ${global_action}
+    n_envs: null
+    n_obs_steps: ${global_obs}
+    n_test: 40
+    n_test_vis: 2
+    n_train: 6
+    n_train_vis: 1
+    past_action: false
+    test_start_seed: 100000
+    train_start_seed: 0
+  image_shape:
+  - 3
+  - 96
+  - 96
+  name: pusht_image
+  shape_meta:
+    action:
+      shape:
+      - 2
+    obs:
+      agent_pos:
+        shape:
+        - 2
+        type: low_dim
+      image:
+        shape:
+        - 3
+        - 96
+        - 96
+        type: rgb
+task_name: pusht_image
+training:
+  checkpoint_every: 100
+  debug: false
+  device: cuda:0
+  gradient_accumulate_every: 1
+  lr_scheduler: cosine
+  lr_warmup_steps: 1000
+  max_train_steps: null
+  max_val_steps: null
+  num_epochs: 701
+  resume: true
+  rollout_every: 100
+  sample_every: 5
+  seed: 42
+  tqdm_interval_sec: 1.0
+  use_ema: true
+  val_every: 1
+val_dataloader:
+  batch_size: 64
+  num_workers: 8
+  persistent_workers: false
+  pin_memory: true
+  shuffle: false
