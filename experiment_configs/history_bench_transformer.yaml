@@ -136,26 +136,27 @@ shape_meta:
 
 # ===== dataset + runner (keep indentation under `task:`) =====
 task:
-  _target_: diffusion_policy.dataset.maniskill_image_dataset.ManiSkillLDPImageDataset
-  dataset_path: '/home/haoran-zhang/Desktop/hisotrybench/demo_data/record_dataset_ButtonChooseBin_2.h5'
-  horizon: 16
-  pad_before: 0
-  pad_after: 0
-  image_key: image
-  wrist_image_key: wrist_image
-  use_wrist_camera: false
-  state_key: state
-  action_key: action
-  seed: 42
-  val_ratio: 0.05
-  max_train_episodes: null
-  success_key: current_task_demonstration
-  success_filter: exclude_true
-  exclude_current_task_timesteps: true
-  env_filter: null
-  max_envs: null
-  max_episodes_per_env: null
-  max_total_episodes: null
+  dataset:
+    _target_: diffusion_policy.dataset.demo_dataset.ManiSkillLDPImageDataset
+    dataset_path: '/home/haoran-zhang/Desktop/hisotrybench/demo_data/record_dataset_ButtonChooseBin_2.h5'
+    horizon: 16
+    pad_before: 0
+    pad_after: 0
+    image_key: image
+    wrist_image_key: wrist_image
+    use_wrist_camera: false
+    state_key: state
+    action_key: action
+    seed: 42
+    val_ratio: 0.05
+    max_train_episodes: null
+    success_key: current_task_demonstration
+    success_filter: exclude_true
+    exclude_current_task_timesteps: true
+    env_filter: null
+    max_envs: null
+    max_episodes_per_env: null
+    max_total_episodes: null
 
   env_runner:
     _target_: diffusion_policy.env_runner.pusht_image_runner.PushTImageRunner

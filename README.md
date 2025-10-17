@@ -215,7 +215,7 @@ If you use the code, remember to cite our paper:
 ```
 python train.py \
   --config-dir=experiment_configs \
-  --config-name=history_bench/history_bench_transformer \
+  --config-name=history_bench_transformer \
   --logging.name="encoder_e2e" \
   --hydra.run.dir="data/outputs/encoder_e2e"
 
