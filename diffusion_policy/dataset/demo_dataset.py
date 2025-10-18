@@ -221,7 +221,8 @@ class ManiSkillLDPImageDataset(BaseImageDataset):
     def _detect_success_key(self, ts_grp: h5py.Group) -> Optional[str]:
         if self.requested_success_key is not None and self.requested_success_key in ts_grp:
             return self.requested_success_key
-        candidates = ["finish_demonstration", "success", "done", "current_task_demonstration"]
+        candidates = ['demonstration']
+        # breakpoint()
         for k in candidates:
             if k in ts_grp:
                 return k
@@ -280,6 +281,8 @@ class ManiSkillLDPImageDataset(BaseImageDataset):
                     episodes = _sorted_numeric_suffix(list(env_grp.keys()), "episode_")
                     if self.max_episodes_per_env is not None:
                         episodes = episodes[: self.max_episodes_per_env]
+                    # FIXME episode only load two episodes(for debugging)
+                    episodes = episodes[:2]
                     for ep_name in episodes:
                         ep_grp = env_grp[ep_name]
                         ts_names = _sorted_numeric_suffix(list(ep_grp.keys()), "record_timestep_")

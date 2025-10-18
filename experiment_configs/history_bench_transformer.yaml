@@ -182,7 +182,7 @@ task:
       agent_pos: {shape: [2], type: low_dim}
       image: {shape: [3, 96, 96], type: rgb}
 
-task_name: pusht_image
+task_name: historybench
 
 # ===== schedule =====
 training:

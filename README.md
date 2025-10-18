@@ -228,7 +228,7 @@ python rewrite_with_embeddings.py \
 
 python train.py \
   --config-dir=experiment_configs \
-  --config-name=history_bench/history_bench_emb \
+  --config-name=history_bench_emb \
   --logging.name="encoder_longctx_emb" \
   --hydra.run.dir="data/outputs/encoder_longctx_emb"
 

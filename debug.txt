@@ -1,8 +1,11 @@
 _target_: diffusion_policy.workspace.train_diffusion_transformer_hybrid_workspace.TrainDiffusionTransformerHybridWorkspace
+obs_encoder_dir: null
+obs_encoder_freeze: false
 global_horizon: 64
-global_action: 1
 global_obs: 2
-
+global_action: 1
+subsample_frames: 1
+subsampling_method: uniform
 checkpoint:
   save_last_ckpt: true
   save_last_snapshot: false
@@ -17,7 +20,13 @@ dataloader:
   persistent_workers: false
   pin_memory: true
   shuffle: true
-dataset_obs_steps: ${global_obs}
+val_dataloader:
+  batch_size: 64
+  num_workers: 8
+  persistent_workers: false
+  pin_memory: true
+  shuffle: false
+dataset_obs_steps: 2
 ema:
   _target_: diffusion_policy.model.diffusion.ema_model.EMAModel
   inv_gamma: 1.0
@@ -26,25 +35,25 @@ ema:
   power: 0.75
   update_after_step: 0
 exp_name: default
-horizon: ${global_horizon}
+horizon: 64
 keypoint_visible_rate: 1.0
 logging:
   group: null
   id: null
   mode: online
-  name: 2023.01.16-20.20.50_train_diffusion_transformer_hybrid_pusht_image
+  name: encoder_e2e
   project: diffusion_policy_debug
   resume: true
   tags:
   - train_diffusion_transformer_hybrid
   - pusht_image
-  - default
+  - encoder_e2e
 multi_run:
-  run_dir: data/outputs/2023.01.16/20.20.50_train_diffusion_transformer_hybrid_pusht_image
-  wandb_name_base: 2023.01.16-20.20.50_train_diffusion_transformer_hybrid_pusht_image
-n_action_steps: ${global_action}
+  run_dir: data/outputs/encoder_e2e
+  wandb_name_base: encoder_e2e
+n_action_steps: 1
 n_latency_steps: 0
-n_obs_steps: ${global_obs}
+n_obs_steps: 2
 name: train_diffusion_transformer_hybrid
 obs_as_cond: true
 optimizer:
@@ -60,18 +69,20 @@ policy:
   causal_attn: true
   past_action_pred: false
   past_steps_reg: -1
-  use_embed_if_present: true
+  obs_encoder_dir: null
+  obs_encoder_freeze: false
+  use_embed_if_present: false
   crop_shape:
   - 84
   - 84
   eval_fixed_crop: true
-  horizon: ${global_horizon}
-  n_action_steps: ${global_action}
+  horizon: 64
+  n_action_steps: 1
   n_cond_layers: 0
   n_emb: 256
   n_head: 4
   n_layer: 8
-  n_obs_steps: ${global_obs}
+  n_obs_steps: 2
   noise_scheduler:
     _target_: diffusers.schedulers.scheduling_ddpm.DDPMScheduler
     beta_end: 0.02
@@ -84,8 +95,6 @@ policy:
   num_inference_steps: 100
   obs_as_cond: true
   obs_encoder_group_norm: true
-  obs_encoder_dir: null
-  obs_encoder_freeze: false
   p_drop_attn: 0.3
   p_drop_emb: 0.0
   shape_meta:
@@ -123,20 +132,19 @@ task:
   dataset:
     _target_: diffusion_policy.dataset.demo_dataset.ManiSkillLDPImageDataset
     dataset_path: /home/haoran-zhang/Desktop/hisotrybench/demo_data/record_dataset_ButtonChooseBin_2.h5
-    horizon: ${global_horizon}
-    pad_before: 1
-    pad_after: 7
+    horizon: 16
+    pad_before: 0
+    pad_after: 0
     image_key: image
     wrist_image_key: wrist_image
     use_wrist_camera: false
     state_key: state
     action_key: action
-    # split / sampling
     seed: 42
-    val_ratio: 0.02
-    max_train_episodes: 90
-    success_key: demonstration
-    success_filter: exclude_true         # keep timesteps NOT marked as “current task”
+    val_ratio: 0.05
+    max_train_episodes: null
+    success_key: current_task_demonstration
+    success_filter: exclude_true
     exclude_current_task_timesteps: true
     env_filter: null
     max_envs: null
@@ -147,9 +155,9 @@ task:
     fps: 10
     legacy_test: true
     max_steps: 300
-    n_action_steps: ${global_action}
+    n_action_steps: 1
     n_envs: null
-    n_obs_steps: ${global_obs}
+    n_obs_steps: 2
     n_test: 40
     n_test_vis: 2
     n_train: 6
@@ -177,7 +185,7 @@ task:
         - 96
         - 96
         type: rgb
-task_name: historybench
+task_name: pusht_image
 training:
   checkpoint_every: 100
   debug: false
@@ -195,9 +203,14 @@ training:
   tqdm_interval_sec: 1.0
   use_ema: true
   val_every: 1
-val_dataloader:
-  batch_size: 64
-  num_workers: 8
-  persistent_workers: false
-  pin_memory: true
-  shuffle: false
+
+
+============= Initialized Observation Utils with Obs Spec =============
+
+using obs modality: low_dim with keys: ['agent_pos']
+using obs modality: rgb with keys: ['image']
+using obs modality: depth with keys: []
+using obs modality: scan with keys: []
+[2025-10-18 17:50:31,728][diffusion_policy.model.diffusion.transformer_for_diffusion][INFO] - number of parameters: 8.989186e+06
+pygame 2.1.2 (SDL 2.0.16, Python 3.9.18)
+Hello from the pygame community. https://www.pygame.org/contribute.html
